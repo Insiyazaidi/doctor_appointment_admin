@@ -7,7 +7,7 @@ import { AppContext } from '../Context/Appcontext'
 const Navbar = () => {
     const navigate = useNavigate()
     const [shownmenu , Setshowmenu ] =useState(false)
-   const {token , Settoken}=useContext(AppContext)
+   const {token , Settoken , userdata}=useContext(AppContext)
 
    const logout = ()=>{
     Settoken(false)
@@ -27,13 +27,13 @@ const Navbar = () => {
         </ul>
         <div>
             {
-                token? <div className='flex items-centre gap-2 cursor-pointer group relative'><img  className="w-8 rounded-full  mb-3"src={assets.profile_pic}>
+                token && userdata ? <div className='flex items-centre gap-2 cursor-pointer group relative'><img  className="w-7 h-7 rounded-full"src={userdata.image}>
                     </img>
                      <img className='w-2.5' src={assets.dropdown_icon}></img>
                 <div className='absolute top-0 right-0 pt-14 text-base font-medium text-gray-600 z-20 hidden  group-hover:block'>
                     <div className='min-w-48 bg-stone-100 rounded flex flex-col gap-4 p-4'>
                     <p  onClick={()=>navigate("my-profile")}className='hover text-black cursor pointer'>My Profile</p>
-                      <p  onClick={()=>navigate("/my-appointments")} className='hover text-black cursor pointer'>My Appointment</p>
+                      <p  onClick={()=>navigate("my-appointments")} className='hover text-black cursor pointer'>My Appointment</p>
                         <p  onClick={logout} className='hover text-black cursor pointer'>Logout</p>
                     </div>
                   

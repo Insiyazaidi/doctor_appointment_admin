@@ -1,70 +1,117 @@
 import React, { useState } from 'react'
 import { useContext } from 'react'
-import { useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { AppContext } from '../Context/Appcontext'
 import { useEffect } from 'react'
 import { assets } from '../assets/assets'
 import Relateddoctors from '../Components/Relateddoctors'
+import { toast } from 'react-toastify'
+import axios from 'axios'
 const Appointment = () => {
   const {docId } = useParams()
   console.log(docId)
 const daysofweek = ['SUN' , 'MON' , 'TUE' , 'WED' , 'THUR' , 'FRI' , 'SAT' ]
-const {doctors , currencysymbol} = useContext(AppContext)
+const {doctors , currencysymbol , backendurl , token , getdoctordata } = useContext(AppContext)
 const [docinfo , Setdocinfo] = useState(null)
 const [docslots , Setdocslots]=useState([])
 const [slotindex , Setslotindex] = useState(0)
 const [slottime , Setslottime] = useState("")
+const navigate = useNavigate()
 const fetchdocinfo = async()=>{
 const docinfo = doctors.find(doc=>doc._id === docId)
 Setdocinfo(docinfo)
 
 }
 
-const getavailableslot = async () => {
-  Setdocslots([]);
-  const today = new Date();
-  const alldays = [];
+ const getavailableslot = async () => {
+   Setdocslots([]);
+   const today = new Date();
+   const alldays = [];
 
-  for (let i = 0; i < 7; i++) {
-    const currdate = new Date(today);
-    currdate.setDate(today.getDate() + i);
+   for (let i = 0; i < 7; i++) {    // yeh loop 7 bar chlega aur top to bottom hm ek run m ek day ko fix krrhe hoge 
+     const currdate = new Date(today);
+     currdate.setDate(today.getDate() + i);
 
-    const starttime = new Date(currdate);
-    const endtime = new Date(currdate);
-    endtime.setHours(21, 0, 0, 0); // slots end at 9 PM
+     const starttime = new Date(currdate);
+     const endtime = new Date(currdate);
+     endtime.setHours(21, 0, 0, 0); // slots end at 9 PM
 
-    if (i === 0) {
-      // today
+     if (i === 0) {
+//       // today
       const now = new Date();
       if (now.getHours() < 10) {
-        starttime.setHours(10, 0, 0, 0); // before 10 AM → start at 10 AM
-      } else {
-        // round up to next half-hour slot
-        let next = new Date(now);
-        next.setSeconds(0, 0);
-        next.setMinutes(now.getMinutes() < 30 ? 30 : 0);
-        if (now.getMinutes() >= 30) next.setHours(now.getHours() + 1);
-        starttime.setHours(next.getHours(), next.getMinutes(), 0, 0);
-      }
-    } else {
-      // future days start from 10 AM
-      starttime.setHours(10, 0, 0, 0);
-    }
+         starttime.setHours(10, 0, 0, 0); // before 10 AM → start at 10 AM
+       } else {
+//         // round up to next half-hour slot
+         let next = new Date(now);
+         next.setSeconds(0, 0);
+         next.setMinutes(now.getMinutes() < 30 ? 30 : 0);
+         if (now.getMinutes() >= 30) next.setHours(now.getHours() + 1);
+         starttime.setHours(next.getHours(), next.getMinutes(), 0, 0);
+       }
+     } else {
+//       // future days start from 10 AM
+       starttime.setHours(10, 0, 0, 0);
+     }
 
-    const timeslots = [];
-    while (starttime < endtime) {
-      timeslots.push({
-        datetime: new Date(starttime),
-        time: starttime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      });
-      starttime.setMinutes(starttime.getMinutes() + 30);
-    }
+     const timeslots = [];
+     while (starttime < endtime) {
+  let formattedtime = starttime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+       let day = starttime.getDate()
+       let month= starttime.getMonth()+1
+       let year = starttime.getFullYear()
+       const slotdate = day+"_"+month+"_"+year
+ const slottime = formattedtime
+ const isslotavailable = docinfo.slots_booked[slotdate]&& docinfo.slots_booked[slotdate].includes(slottime)?false:true
+ if(isslotavailable){
+   timeslots.push({
+         datetime: new Date(starttime),
+         time:formattedtime ,
+       });
+ }
 
-    if (timeslots.length) alldays.push(timeslots);
-  }
+    
+       starttime.setMinutes(starttime.getMinutes() + 30);
+     }
 
-  Setdocslots(alldays);
-};
+     if (timeslots.length) alldays.push(timeslots);
+   }
+
+   Setdocslots(alldays);
+ };
+
+
+ const bookappointment = async(req,res)=>{
+   if(!token){
+     toast.warn("Login to book appointment ")
+     return navigate("/login")
+   }
+
+ try {
+   const date = docslots[slotindex][0].datetime
+      let day = date.getDate()
+   let month =date.getMonth()+1
+   let year = date.getFullYear()
+  
+  const slotdate = day+"_"+month+"_"+year
+ const {data} =  await axios.post(backendurl+"/api/users/bookappointment" , {docId , slotdate , slottime}, {headers:{token}})
+ if(data.success){
+   toast.success(data.message)
+   getdoctordata()
+   navigate("/my-appointments")
+ }
+ else{
+   toast.error(data.message)
+ }
+ }
+  catch (error) {
+   console.log(error)
+   toast.error(error.message)
+ }
+ }
+
+
+
 
 
 useEffect(()=>{
@@ -130,7 +177,7 @@ useEffect(()=>{
 
 </div>
 
-<button className='bg-primary text-white text-sm font-light px-14 py-3 rounded-full mt-9'>Book an Appointment </button>
+<button onClick={bookappointment} className='bg-primary text-white text-sm font-light px-14 py-3 rounded-full mt-9'>Book an Appointment </button>
 </div>
 
 <Relateddoctors docId={docId} speciality={docinfo.speciality}/>

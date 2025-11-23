@@ -44,7 +44,7 @@ Setdoctors(data.doctors)
      }
 
         const value={
-doctors , currencysymbol , token , Settoken , backendurl , userdata, Setuserdata , loaduserprofiledata
+doctors , currencysymbol , token , Settoken , backendurl , userdata, Setuserdata , loaduserprofiledata , getdoctordata
     }
 
 

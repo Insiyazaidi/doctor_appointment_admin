@@ -18,9 +18,7 @@ app.use("/api/admin" , adminrouter)
 app.use("/api/users" , userrouter)
 // http://localhost:4000/api/admin/add-doctor
 
-app.get("/" , (req,res)=>{
-    res.send("Hi insiya")
-})
+
 
 
 app.listen(port , ()=>{

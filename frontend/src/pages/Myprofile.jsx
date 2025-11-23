@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { useContext } from 'react'
 import { AppContext } from '../Context/Appcontext'
 import {assets}  from "../assets/assets"
+import { toast } from 'react-toastify'
+import axios from 'axios'
 const Myprofile = () => {
 const {userdata , Setuserdata , token , backendurl , loaduserprofiledata} = useContext(AppContext)
 const [isedit , Setisedit] = useState(false)
@@ -11,9 +13,26 @@ const updateuserprofiledata = async()=>{
 try {
   const formdata = new FormData()
   formdata.append("name" , userdata.name)
+  formdata.append("phone" , userdata.phone)
+  formdata.append("address" ,JSON.stringify(userdata.address))
+formdata.append("gender" , userdata.gender)
+formdata.append("dob" , userdata.dob)
+
+image && formdata.append("image" , image)
+const {data} = await axios.post(backendurl+"/api/users/updateprofile" , formdata , {headers:{token}})
+if(data.success){
+  toast.success(data.message)
+  await loaduserprofiledata()
+  Setisedit(false)
+  Setimage(false)
+}
+else{
+  toast.error(data.message)
+}
 
 } catch (error) {
-  
+  console.log(error)
+  toast.error(error.message)
 }
 }
 
